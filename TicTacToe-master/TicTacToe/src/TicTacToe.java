@@ -189,3 +189,177 @@ public class TicTacToe implements ActionListener {
         textField.setText("O Wins");
     }
 }
+
+
+
+import React, { useState } from 'react';
+
+const questionConfigs = {
+  question1: {
+    label: 'Choose your hobbies',
+    options: [
+      { type: 'checkbox', label: 'Reading', group: 'hobbies' },
+      { type: 'checkbox', label: 'Sports', group: 'hobbies' },
+      { type: 'checkbox', label: 'Music', group: 'hobbies' }
+    ]
+  },
+  question2: {
+    label: 'Personal Details',
+    options: [
+      { type: 'input', placeholder: 'Your Name', group: 'name' },
+      {
+        type: 'dropdown',
+        label: 'Role',
+        choices: ['User', 'Admin', 'Manager'],
+        group: 'personal'
+      },
+      { type: 'checkbox', label: 'Agree to Terms', group: 'personal' }
+    ]
+  },
+  question3: {
+    label: 'Preferences',
+    options: [
+      {
+        type: 'dropdown',
+        label: 'Frequency',
+        choices: ['Daily', 'Weekly', 'Monthly'],
+        group: 'preferences'
+      },
+      { type: 'checkbox', label: 'Enable Notifications', group: 'preferences' }
+    ]
+  }
+};
+
+const App = () => {
+  const [selectedQuestion, setSelectedQuestion] = useState('');
+  const [formValues, setFormValues] = useState({});
+
+  const handleRadioChange = (e) => {
+    setSelectedQuestion(e.target.value);
+    setFormValues({}); // reset form when switching
+  };
+
+  const normalizeAnswers = (formValues) => {
+    const normalized = {};
+    for (const [group, value] of Object.entries(formValues)) {
+      if (Array.isArray(value)) {
+        normalized[group] = value.length === 1 ? value[0] : value;
+      } else {
+        normalized[group] = value;
+      }
+    }
+    return normalized;
+  };
+
+  const handleSubmit = () => {
+    const payload = {
+      question: selectedQuestion,
+      answers: normalizeAnswers(formValues)
+    };
+    console.log('Payload:', payload);
+    alert(JSON.stringify(payload, null, 2));
+  };
+
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'Arial' }}>
+      <h2>Select a Question</h2>
+      {Object.keys(questionConfigs).map((key) => (
+        <label key={key} style={{ marginRight: '1rem' }}>
+          <input
+            type="radio"
+            name="question"
+            value={key}
+            checked={selectedQuestion === key}
+            onChange={handleRadioChange}
+          />
+          {questionConfigs[key].label}
+        </label>
+      ))}
+
+      <hr />
+
+      {selectedQuestion && (
+        <div>
+          <h3>{questionConfigs[selectedQuestion].label}</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            {questionConfigs[selectedQuestion].options.map((opt, i) => {
+              const groupKey = opt.group;
+
+              if (opt.type === 'checkbox') {
+                return (
+                  <label key={i}>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        setFormValues((prev) => {
+                          const prevValues = prev[groupKey] || [];
+                          const newValues = e.target.checked
+                            ? [...new Set([...prevValues, opt.label])]
+                            : prevValues.filter((val) => val !== opt.label);
+                          return { ...prev, [groupKey]: newValues };
+                        });
+                      }}
+                    />
+                    {opt.label}
+                  </label>
+                );
+              }
+
+              if (opt.type === 'dropdown') {
+                return (
+                  <div key={i}>
+                    <label>{opt.label}</label>
+                    <br />
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        setFormValues((prev) => {
+                          const prevValues = prev[groupKey] || [];
+                          const newValues = [...new Set([...prevValues.filter(v => v !== selected), selected])];
+                          return { ...prev, [groupKey]: newValues };
+                        });
+                      }}
+                    >
+                      <option value="" disabled>Select</option>
+                      {opt.choices.map((choice, j) => (
+                        <option key={j} value={choice}>
+                          {choice}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+
+              if (opt.type === 'input') {
+                return (
+                  <input
+                    key={i}
+                    type="text"
+                    placeholder={opt.placeholder}
+                    onChange={(e) => {
+                      const inputVal = e.target.value;
+                      setFormValues((prev) => {
+                        return { ...prev, [groupKey]: inputVal };
+                      });
+                    }}
+                  />
+                );
+              }
+
+              return null;
+            })}
+          </div>
+          <button onClick={handleSubmit} style={{ marginTop: '1rem' }}>
+            Submit
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
+
+
